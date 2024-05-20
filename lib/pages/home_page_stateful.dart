@@ -1,9 +1,6 @@
-import 'dart:ffi';
-import 'dart:html';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/user.dart';
-import 'package:flutter_application_1/services/user_service.dart';
+import 'package:flutter_application_1/models/album.dart';
+import 'package:flutter_application_1/services/album_service.dart';
 
 class HomePageStateful extends StatefulWidget {
   const HomePageStateful({super.key});
@@ -13,43 +10,120 @@ class HomePageStateful extends StatefulWidget {
 }
 
 class _HomePageStatefulState extends State<HomePageStateful> {
-  List<User> users = [];
-  bool isLoading = true;
+  List<Album> album = [];
 
-  void fetchUser() async {
-    isLoading = true;
-    final result = await UserService.fetchUsers();
-    users = result;
-    setState(() {});
-    isLoading = false;
+  void fetchAlbum() async {
+    final result = await AlbumService.fetchAlbum();
+    setState(() {
+      album = result;
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    fetchUser();
+    fetchAlbum();
   }
+
+  void deleteAlbum(int index) {
+    setState(() {
+      album.removeAt(index);
+    });
+  }
+
+  void editAlbum(int index, String newTitle, String newUrl, String newThumbnailUrl) {
+    setState(() {
+      album[index].title = newTitle;
+      album[index].url = newUrl;
+      album[index].thumbnailUrl = newThumbnailUrl;
+    });
+  }
+
+  void showEditDialog(BuildContext context, int index) {
+  TextEditingController albumidController = TextEditingController(text: album[index].title.toString());
+  TextEditingController urlController = TextEditingController(text: album[index].url);
+  TextEditingController thumbnailUrlController = TextEditingController(text: album[index].thumbnailUrl);
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Edit Album'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: albumidController,
+              decoration: InputDecoration(labelText: 'Title'),
+            ),
+            TextField(
+              controller: urlController,
+              decoration: InputDecoration(labelText: 'URL'),
+            ),
+            TextField(
+              controller: thumbnailUrlController,
+              decoration: InputDecoration(labelText: 'Thumbnail URL'),
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          ElevatedButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          ElevatedButton(
+            child: Text('Save'),
+            onPressed: () {
+              editAlbum(index, albumidController.text, urlController.text, thumbnailUrlController.text);
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Get Api Stateful'),
+        title: const Text('EXAM 2'),
+        backgroundColor: Colors.blue,
       ),
-      body: isLoading ? Center(
-        child: CircularProgressIndicator(),
-        )
-      : ListView.builder(
-        itemCount: users.length,
+      body: ListView.builder(
+        itemCount: album.length,
         itemBuilder: (context, index) {
-          final user = users[index];
+          final albumItem = album[index];
+          Colors.black;
           return Card(
             child: ListTile(
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(user.avatar),
+                backgroundImage: NetworkImage(albumItem.thumbnailUrl),
               ),
-              title: Text('${user.firstName} ${user.lastName}'),
-              subtitle: Text(user.email),
+              title: Text('${albumItem.id}. ${albumItem.title}'),
+              subtitle: Text(albumItem.url),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.edit),
+                    color: Colors.blue,
+                    onPressed: () {
+                      showEditDialog(context, index);
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    color: Colors.red,
+                    onPressed: () {
+                      deleteAlbum(index);
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },
